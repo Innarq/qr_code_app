@@ -14,6 +14,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Flutter Example',
       theme: ThemeData(
+        scaffoldBackgroundColor: Color(0xffE4E4E4),
         primarySwatch: Colors.blue,
       ),
       initialRoute: '/',
