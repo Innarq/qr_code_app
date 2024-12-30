@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 
+import 'package:flutter_svg/svg.dart';
+import 'package:qr_code_app/widgets/styled_main_tile.dart';
+
 class QrListScreen extends StatelessWidget {
   final String jsonData = '''
   [
@@ -32,30 +35,45 @@ class QrListScreen extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 36),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 1,
+            childAspectRatio: 0.9,
             crossAxisSpacing: 26,
             mainAxisSpacing: 26,
           ),
-          itemCount: items.length,
+          itemCount: items.length+1,
           itemBuilder: (context, index) {
-            return Container(
-              color: Colors.white,
-              height: 400,
-              child: Column(
-                children: [
-                  Text(items[index]['title']),
-                  Text(items[index]['subtitle']),
-                ]
-              ),
+            return index==items.length
+            ? StyledMainTile(
+              mainColor: Color(0xff111111),
+              secondaryColor: Colors.black,
+              text: "ADD QR CODE",
+              imagePath: "assets/add.png",
+              onPressed: (){Navigator.pushNamed(context, "/form");},
+            )
+            : StyledMainTile(
+              mainColor: Color(0xffE4E4E4),
+              secondaryColor: Color(0xff313131),
+              text: items[index]["title"],
+              imagePath: "assets/qr_code.png",
+              onPressed: (){},
             );
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/form');
-        },
-        child: Icon(Icons.add),
+      floatingActionButton: Transform.translate(
+        offset: Offset(-20, -20), // Moves the button 100px from right and bottom
+        child: FloatingActionButton(
+          shape: CircleBorder(), // Ensures the button is a circle
+          backgroundColor: Colors.black,
+          onPressed: () {
+            Navigator.pushNamed(context, '/form');
+          },
+          child: Container(
+            margin: EdgeInsets.all(13),
+            child: SvgPicture.asset(
+              "assets/add_qr.svg",
+            ),
+          ),
+        ),
       ),
     );
   }
