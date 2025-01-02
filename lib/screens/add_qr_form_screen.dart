@@ -1,8 +1,8 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:qr_code_app/Utilities/local_storage_utility.dart';
+import 'package:qr_code_app/widgets/move_back_app_bar.dart';
+import 'package:qr_code_app/widgets/styled_add_qr_form_field.dart';
 
 class AddQrFormScreen extends StatefulWidget {
   @override
@@ -15,53 +15,16 @@ class _AddQrFormScreenState extends State<AddQrFormScreen> {
   final TextEditingController _urlController = TextEditingController();
   File? _selectedImage;
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
-    }
-  }
-
-  Future<void> _saveFormData() async {
-    if (_formKey.currentState!.validate()) {
-      final formData = {
-        'name': _nameController.text,
-        'url': _urlController.text,
-        'imagePath': _selectedImage?.path ?? '',
-      };
-
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/form_data.json');
-
-      await file.writeAsString(jsonEncode(formData));
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Form data saved successfully!')),
-      );
-    }
-  }
+  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200],
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
+      appBar: MoveBackAppBar(),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
           child: Form(
             key: _formKey,
             child: Column(
@@ -77,9 +40,9 @@ class _AddQrFormScreenState extends State<AddQrFormScreen> {
                   ),
                 ),
                 SizedBox(height: 20),
-                TextFormField(
+                StyledAddQrFormField(
                   controller: _nameController,
-                  decoration: fieldDecoration(placeholder: "Your code name"),
+                  placeholder: "Your code name",
                   maxLines: 5,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -89,10 +52,9 @@ class _AddQrFormScreenState extends State<AddQrFormScreen> {
                   },
                 ),
                 SizedBox(height: 16),
-                TextFormField(
+                StyledAddQrFormField(
                   controller: _urlController,
-                  decoration: fieldDecoration(placeholder: "Your QR url"),
-                  cursorColor: Colors.black,
+                  placeholder: "Your QR url",
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your QR url';
@@ -102,7 +64,10 @@ class _AddQrFormScreenState extends State<AddQrFormScreen> {
                 ),
                 SizedBox(height: 16),
                 ElevatedButton.icon(
-                  onPressed: _pickImage,
+                  onPressed: () async {
+                    _selectedImage = await LocalStorageUtility.pickImage();
+                    setState(() {});
+                  },
                   icon: Icon(Icons.add),
                   label: Text('Add image (optional)'),
                   style: ElevatedButton.styleFrom(
@@ -118,7 +83,9 @@ class _AddQrFormScreenState extends State<AddQrFormScreen> {
                 Divider(color: Colors.black),
                 SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: _saveFormData,
+                  onPressed: (){LocalStorageUtility.saveFormData(context,
+                    formKey: _formKey, qrName: _nameController.text, qrUrl: _urlController.text, selectedImage: _selectedImage
+                  );},
                   child: Text('GENERATE QR CODE!'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
@@ -130,22 +97,6 @@ class _AddQrFormScreenState extends State<AddQrFormScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  InputDecoration fieldDecoration({String? placeholder = null}) {
-    return InputDecoration(
-      labelText: placeholder,
-      labelStyle: TextStyle(color: Color(0xff313131)),
-      alignLabelWithHint: true,
-      focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.black),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Color(0xff313131)),
-      ),
-      filled: true,
-      fillColor: Colors.white,
     );
   }
 }

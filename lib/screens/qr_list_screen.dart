@@ -1,34 +1,32 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-
-import 'package:flutter_svg/svg.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:qr_code_app/Utilities/local_storage_utility.dart';
+import 'package:qr_code_app/screens/qr_details_screen.dart';
+import 'package:qr_code_app/widgets/add_qr_floating_button.dart';
 import 'package:qr_code_app/widgets/styled_main_tile.dart';
 
-class QrListScreen extends StatelessWidget {
-  final String jsonData = '''
-  [
-    {"title": "Item 1", "subtitle": "Subtitle 1"},
-    {"title": "Item 2", "subtitle": "Subtitle 2"},
-    {"title": "Item 3", "subtitle": "Subtitle 3"},
-    {"title": "Item 4", "subtitle": "Subtitle 4"},
-    {"title": "Item 1", "subtitle": "Subtitle 1"},
-    {"title": "Item 2", "subtitle": "Subtitle 2"},
-    {"title": "Item 3", "subtitle": "Subtitle 3"},
-    {"title": "Item 1", "subtitle": "Subtitle 1"},
-    {"title": "Item 2", "subtitle": "Subtitle 2"},
-    {"title": "Item 3", "subtitle": "Subtitle 3"},
-    {"title": "Item 4", "subtitle": "Subtitle 4"},
-    {"title": "Item 1", "subtitle": "Subtitle 1"},
-    {"title": "Item 2", "subtitle": "Subtitle 2"},
-    {"title": "Item 3", "subtitle": "Subtitle 3"},
-    {"title": "Item 4", "subtitle": "Subtitle 4"}
-  ]
-  ''';
+class QrListScreen extends StatefulWidget {
+  @override
+  _QrListScreenState createState() => _QrListScreenState();
+}
+
+class _QrListScreenState extends State<QrListScreen> {
+  List<dynamic> items = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQrData();
+  }
+
+  Future<void> _loadQrData() async {
+    final directory = await getApplicationDocumentsDirectory();
+    items= await LocalStorageUtility.loadQrData('${directory.path}/form_data.json');
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<dynamic> items = json.decode(jsonData);
-
     return Scaffold(
       body: SafeArea(
         child: GridView.builder(
@@ -39,41 +37,50 @@ class QrListScreen extends StatelessWidget {
             crossAxisSpacing: 26,
             mainAxisSpacing: 26,
           ),
-          itemCount: items.length+1,
+          itemCount: items.length + 1,
           itemBuilder: (context, index) {
-            return index==items.length
-            ? StyledMainTile(
-              mainColor: Color(0xff111111),
-              secondaryColor: Colors.black,
-              text: "ADD QR CODE",
-              imagePath: "assets/add.png",
-              onPressed: (){Navigator.pushNamed(context, "/form");},
-            )
-            : StyledMainTile(
-              mainColor: Color(0xffE4E4E4),
-              secondaryColor: Color(0xff313131),
-              text: items[index]["title"],
-              imagePath: "assets/qr_code.png",
-              onPressed: (){},
-            );
+            return index == items.length
+                ? StyledMainTile(
+                    mainColor: Color(0xff111111),
+                    secondaryColor: Colors.black,
+                    text: "ADD QR CODE",
+                    imagePath: "assets/add.png",
+                    onPressed: () {
+                      Navigator.pushNamed(context, "/form").then((_) {
+                        _loadQrData(); // Reload data after returning from form
+                      });
+                    },
+                  )
+                : StyledMainTile(
+                    mainColor: Color(0xffE4E4E4),
+                    secondaryColor: Color(0xff313131),
+                    text: items[index]["name"], // Using the "name" field from form
+                    imagePath: items[index]["imagePath"].isNotEmpty
+                        ? items[index]["imagePath"] // Use custom image path if provided
+                        : "assets/qr_code.png",
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => QrDetailsScreen(
+                            imagePath: items[index]["imagePath"],
+                            name: items[index]["name"],
+                            url: items[index]["url"],
+                          ),
+                        ),
+                      );
+                    },
+                  );
           },
         ),
       ),
       floatingActionButton: Transform.translate(
-        offset: Offset(-20, -20), // Moves the button 100px from right and bottom
-        child: FloatingActionButton(
-          shape: CircleBorder(), // Ensures the button is a circle
-          backgroundColor: Colors.black,
-          onPressed: () {
-            Navigator.pushNamed(context, '/form');
-          },
-          child: Container(
-            margin: EdgeInsets.all(13),
-            child: SvgPicture.asset(
-              "assets/add_qr.svg",
-            ),
-          ),
-        ),
+        offset: Offset(-20, -20),
+        child: AddQrFloatingButton(onPressed: () {
+          Navigator.pushNamed(context, '/form').then((_) {
+            _loadQrData();
+          });
+        },)
       ),
     );
   }
