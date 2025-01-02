@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:qr_code_app/widgets/saved_qr_image.dart';
 
